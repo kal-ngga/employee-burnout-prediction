@@ -66,3 +66,4 @@ Output aplikasi:
 - Low Burnout Risk atau High Burnout Risk
 - Recommendation sederhana
 
+# employee-burnout-prediction
