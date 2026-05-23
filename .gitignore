@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# PyCharm
+.idea/
+
+# OS
+.DS_Store
+
+# Model files
+models/*.pkl
+
+# Processed data
+data/processed/
+
+# Reports output
+reports/*.csv
+reports/*.txt
+
+# Assets generated
+assets/*.png
+assets/*.jpg
+assets/*.jpeg
+
+# Streamlit
+.streamlit/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
