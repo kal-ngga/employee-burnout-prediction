@@ -1,8 +1,7 @@
-"""Main entry point for running the full CRISP-DM project pipeline."""
+"""Menjalankan semua proses project."""
 
 import os
 
-# Silence CPU-count warnings from joblib in restricted local environments.
 os.environ.setdefault("LOKY_MAX_CPU_COUNT", "8")
 
 from data_preparation import prepare_data
@@ -12,8 +11,8 @@ from classification import run_classification
 from visualization import create_visualizations
 
 
-def main() -> None:
-    """Run all project stages from data preparation to model evaluation."""
+def main():
+    """Menjalankan proses dari persiapan data sampai visualisasi."""
     print("Starting Employee Burnout Prediction pipeline...")
     cleaned_df = prepare_data()
     clustered_df = run_clustering(cleaned_df)

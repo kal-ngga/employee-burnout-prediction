@@ -1,4 +1,4 @@
-"""Streamlit deployment app for Employee Burnout Prediction."""
+"""Aplikasi Streamlit untuk prediksi burnout."""
 
 import sys
 from pathlib import Path
@@ -21,20 +21,23 @@ from utils import (  # noqa: E402
 )
 
 
-def load_risk_mapping() -> dict[int, dict[str, str]]:
-    """Load cluster-to-risk labels generated during the clustering step."""
+def load_risk_mapping():
+    """Membaca keterangan risiko dari file cluster_risk_mapping.csv."""
     mapping_df = pd.read_csv(CLUSTER_RISK_MAPPING_PATH)
-    return {
-        int(row["Cluster"]): {
+
+    risk_mapping = {}
+    for _, row in mapping_df.iterrows():
+        cluster = int(row["Cluster"])
+        risk_mapping[cluster] = {
             "risk": row["Risk Label"],
             "recommendation": row["Recommendation"],
         }
-        for _, row in mapping_df.iterrows()
-    }
+
+    return risk_mapping
 
 
-def main() -> None:
-    """Render the Streamlit interface and predict burnout risk from user input."""
+def main():
+    """Menampilkan form dan hasil prediksi."""
     st.set_page_config(page_title="Employee Burnout Prediction")
     st.title("Employee Burnout Prediction")
 

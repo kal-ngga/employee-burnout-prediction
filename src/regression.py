@@ -1,15 +1,21 @@
-"""Regression step using RandomForestRegressor to predict the Cluster target."""
+"""Model regresi untuk memprediksi cluster."""
 
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
-from utils import CLUSTERING_RESULT_PATH, NUMERIC_FEATURES, REGRESSION_MODEL_PATH, REPORTS_DIR, save_model
+from utils import (
+    CLUSTERING_RESULT_PATH,
+    NUMERIC_FEATURES,
+    REGRESSION_MODEL_PATH,
+    REPORTS_DIR,
+    save_model,
+)
 
 
-def run_regression(clustered_df: pd.DataFrame | None = None) -> RandomForestRegressor:
-    """Train and evaluate a RandomForestRegressor using Cluster as target."""
+def run_regression(clustered_df=None):
+    """Melatih model regresi dan menyimpan hasil evaluasi."""
     if clustered_df is None:
         clustered_df = pd.read_csv(CLUSTERING_RESULT_PATH)
 
@@ -26,7 +32,7 @@ def run_regression(clustered_df: pd.DataFrame | None = None) -> RandomForestRegr
 
     evaluation = [
         "Regression Evaluation - RandomForestRegressor",
-        f"Target variable: Cluster",
+        "Target variable: Cluster",
         f"Mean Absolute Error: {mean_absolute_error(y_test, predictions):.4f}",
         f"Mean Squared Error: {mean_squared_error(y_test, predictions):.4f}",
         f"R2 Score: {r2_score(y_test, predictions):.4f}",

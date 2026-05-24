@@ -1,4 +1,4 @@
-"""Data Understanding and Data Preparation steps for the CRISP-DM pipeline."""
+"""Bagian persiapan data."""
 
 import pandas as pd
 
@@ -7,22 +7,26 @@ from utils import (
     DATA_IDENTIFICATION_REPORT_PATH,
     NUMERIC_FEATURES,
     classify_column_type,
-    create_project_dirs,
     read_raw_dataset,
 )
 
 
-def create_data_identification_report(df: pd.DataFrame) -> pd.DataFrame:
-    """Build a report containing variable names, counts, types, and missing values."""
-    report = pd.DataFrame(
-        {
-            "variable_name": df.columns,
-            "data_type": [str(df[column].dtype) for column in df.columns],
-            "data_nature": [classify_column_type(df[column]) for column in df.columns],
-            "missing_values": [int(df[column].isna().sum()) for column in df.columns],
-            "unique_values": [int(df[column].nunique(dropna=True)) for column in df.columns],
-        }
-    )
+def create_data_identification_report(df):
+    """Membuat laporan sederhana tentang isi dataset."""
+    report_data = []
+
+    for column in df.columns:
+        report_data.append(
+            {
+                "variable_name": column,
+                "data_type": str(df[column].dtype),
+                "data_nature": classify_column_type(df[column]),
+                "missing_values": int(df[column].isna().sum()),
+                "unique_values": int(df[column].nunique(dropna=True)),
+            }
+        )
+
+    report = pd.DataFrame(report_data)
 
     summary_rows = pd.DataFrame(
         [
@@ -45,15 +49,13 @@ def create_data_identification_report(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([report, summary_rows], ignore_index=True)
 
 
-def prepare_data() -> pd.DataFrame:
-    """Clean the dataset, select modeling variables, and save the processed dataset."""
-    create_project_dirs()
+def prepare_data():
+    """Membersihkan dataset dan menyimpannya ke folder data/processed."""
     df = read_raw_dataset()
 
     identification_report = create_data_identification_report(df)
     identification_report.to_csv(DATA_IDENTIFICATION_REPORT_PATH, index=False)
 
-    # Convert date and numeric columns into consistent machine-learning friendly types.
     df["Date of Joining"] = pd.to_datetime(
         df["Date of Joining"], format="%d/%m/%y", errors="coerce"
     )
@@ -83,7 +85,6 @@ def prepare_data() -> pd.DataFrame:
     ]
     cleaned_df = df[selected_columns].copy()
 
-    # Numeric model features are imputed with medians; categorical columns use modes.
     for column in NUMERIC_FEATURES + ["Burn Rate"]:
         cleaned_df[column] = cleaned_df[column].fillna(cleaned_df[column].median())
 

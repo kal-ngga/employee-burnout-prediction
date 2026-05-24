@@ -1,4 +1,4 @@
-"""Utility functions shared by the Employee Burnout Prediction pipeline."""
+"""Kumpulan fungsi dan lokasi file yang dipakai di project."""
 
 from pathlib import Path
 
@@ -32,22 +32,10 @@ NUMERIC_FEATURES = [
 ]
 
 
-def create_project_dirs() -> None:
-    """Create required folders if they do not already exist."""
-    for directory in [
-        DATA_RAW_DIR,
-        DATA_PROCESSED_DIR,
-        MODELS_DIR,
-        REPORTS_DIR,
-        ASSETS_DIR,
-    ]:
-        directory.mkdir(parents=True, exist_ok=True)
-
-
-def read_raw_dataset() -> pd.DataFrame:
-    """Read the raw semicolon-separated dataset without changing its location."""
+def read_raw_dataset():
+    """Membaca dataset mentah."""
     if not RAW_DATA_PATH.exists():
-        raise FileNotFoundError(f"Dataset not found: {RAW_DATA_PATH}")
+        raise FileNotFoundError(f"Dataset tidak ditemukan: {RAW_DATA_PATH}")
 
     return pd.read_csv(
         RAW_DATA_PATH,
@@ -56,22 +44,20 @@ def read_raw_dataset() -> pd.DataFrame:
         encoding="utf-8-sig",
     )
 
-
-def save_model(model, path: Path) -> None:
-    """Persist a model or preprocessing object with joblib."""
-    path.parent.mkdir(parents=True, exist_ok=True)
+def save_model(model, path):
+    """Menyimpan model."""
     joblib.dump(model, path)
 
 
-def load_model(path: Path):
-    """Load a model or preprocessing object saved with joblib."""
+def load_model(path):
+    """Membaca model yang sudah disimpan."""
     if not path.exists():
-        raise FileNotFoundError(f"Model artifact not found: {path}")
+        raise FileNotFoundError(f"Model tidak ditemukan: {path}")
     return joblib.load(path)
 
 
-def classify_column_type(series: pd.Series) -> str:
-    """Return a simple data nature label used in the identification report."""
+def classify_column_type(series):
+    """Menentukan jenis data secara sederhana."""
     if pd.api.types.is_datetime64_any_dtype(series):
         return "date"
     if pd.api.types.is_numeric_dtype(series):

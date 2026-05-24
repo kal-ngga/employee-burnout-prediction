@@ -1,15 +1,21 @@
-"""Classification step using RandomForestClassifier to predict the Cluster target."""
+"""Model klasifikasi untuk memprediksi cluster."""
 
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
-from utils import CLASSIFICATION_MODEL_PATH, CLUSTERING_RESULT_PATH, NUMERIC_FEATURES, REPORTS_DIR, save_model
+from utils import (
+    CLASSIFICATION_MODEL_PATH,
+    CLUSTERING_RESULT_PATH,
+    NUMERIC_FEATURES,
+    REPORTS_DIR,
+    save_model,
+)
 
 
-def run_classification(clustered_df: pd.DataFrame | None = None) -> RandomForestClassifier:
-    """Train and evaluate a RandomForestClassifier using Cluster as target."""
+def run_classification(clustered_df=None):
+    """Melatih model klasifikasi dan menyimpan hasil evaluasi."""
     if clustered_df is None:
         clustered_df = pd.read_csv(CLUSTERING_RESULT_PATH)
 
@@ -44,7 +50,6 @@ def run_classification(clustered_df: pd.DataFrame | None = None) -> RandomForest
     print(f"Classification evaluation saved to {evaluation_path}")
 
     return model
-
 
 if __name__ == "__main__":
     run_classification()

@@ -1,4 +1,4 @@
-"""K-Means clustering step for creating the target Cluster variable."""
+"""Membuat cluster dengan K-Means."""
 
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -15,8 +15,8 @@ from utils import (
 )
 
 
-def run_clustering(cleaned_df: pd.DataFrame | None = None) -> pd.DataFrame:
-    """Train K-Means with exactly two clusters and save the clustered dataset."""
+def run_clustering(cleaned_df=None):
+    """Melatih K-Means dan menyimpan hasil clustering."""
     if cleaned_df is None:
         cleaned_df = pd.read_csv(CLEANED_DATA_PATH)
 

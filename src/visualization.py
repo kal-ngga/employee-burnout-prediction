@@ -1,12 +1,10 @@
-"""Visualization step for correlation, clustering, and distribution charts."""
+"""Membuat visualisasi data."""
 
 import os
 
 from utils import ASSETS_DIR
 
-# Keep Matplotlib cache inside the project so the pipeline works in restricted shells.
 MPL_CACHE_DIR = ASSETS_DIR / "matplotlib_cache"
-MPL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", str(MPL_CACHE_DIR))
 os.environ.setdefault("XDG_CACHE_HOME", str(MPL_CACHE_DIR))
 os.environ.setdefault("MPLBACKEND", "Agg")
@@ -18,12 +16,11 @@ import seaborn as sns
 from utils import CLUSTERING_RESULT_PATH, NUMERIC_FEATURES
 
 
-def create_visualizations(clustered_df: pd.DataFrame | None = None) -> None:
-    """Create and save the visual assets required by the project."""
+def create_visualizations(clustered_df=None):
+    """Membuat grafik dan menyimpannya ke folder assets."""
     if clustered_df is None:
         clustered_df = pd.read_csv(CLUSTERING_RESULT_PATH)
 
-    ASSETS_DIR.mkdir(parents=True, exist_ok=True)
     sns.set_theme(style="whitegrid")
 
     plt.figure(figsize=(8, 6))
