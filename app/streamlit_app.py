@@ -20,7 +20,6 @@ from utils import (  # noqa: E402
     load_model,
 )
 
-
 def load_risk_mapping():
     """Membaca keterangan risiko dari file cluster_risk_mapping.csv."""
     mapping_df = pd.read_csv(CLUSTER_RISK_MAPPING_PATH)
@@ -50,12 +49,18 @@ def main():
         st.error(f"{error}. Run `python src/main.py` from the project root first.")
         st.stop()
 
-    designation = st.number_input("Designation", min_value=0.0, max_value=5.0, value=2.0, step=1.0)
+    designation = st.number_input(
+        "Designation", min_value=0.0, max_value=5.0, value=2.0, step=1.0
+    )
     resource_allocation = st.number_input(
         "Resource Allocation", min_value=1.0, max_value=10.0, value=5.0, step=1.0
     )
-    mental_fatigue_score = st.slider("Mental Fatigue Score", 0.0, 10.0, 5.0, 0.1)
-    years_working = st.number_input("Years Working", min_value=0.0, max_value=50.0, value=3.0, step=1.0)
+    mental_fatigue_score = st.slider(
+        "Mental Fatigue Score", 0.0, 10.0, 5.0, 0.1
+    )
+    years_working = st.number_input(
+        "Years Working", min_value=0.0, max_value=50.0, value=3.0, step=1.0
+    )
 
     if st.button("Predict Burnout Risk", type="primary"):
         input_df = pd.DataFrame(

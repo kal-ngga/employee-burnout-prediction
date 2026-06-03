@@ -1,52 +1,77 @@
-"""Model regresi untuk memprediksi cluster."""
-
+import joblib
 import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
 
 from utils import (
     CLUSTERING_RESULT_PATH,
-    NUMERIC_FEATURES,
     REGRESSION_MODEL_PATH,
+    REGRESSION_EVALUATION_PATH,
     REPORTS_DIR,
-    save_model,
+    NUMERIC_FEATURES,
+    create_directories
 )
 
+def run_regression():
+    create_directories()
+    df = pd.read_csv(CLUSTERING_RESULT_PATH)
 
-def run_regression(clustered_df=None):
-    """Melatih model regresi dan menyimpan hasil evaluasi."""
-    if clustered_df is None:
-        clustered_df = pd.read_csv(CLUSTERING_RESULT_PATH)
-
-    x = clustered_df[NUMERIC_FEATURES]
-    y = clustered_df["Cluster"]
-
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.2, random_state=42, stratify=y
+    X = df[NUMERIC_FEATURES]
+    y = df["Cluster"]
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=1)
-    model.fit(x_train, y_train)
-    predictions = model.predict(x_test)
+    # 1. Random Forest Regressor
+    rf_reg = RandomForestRegressor(
+        n_estimators=100,
+        random_state=42
+    )
+    rf_reg.fit(X_train, y_train)
+    y_pred_rf = rf_reg.predict(X_test)
 
-    evaluation = [
-        "Regression Evaluation - RandomForestRegressor",
-        "Target variable: Cluster",
-        f"Mean Absolute Error: {mean_absolute_error(y_test, predictions):.4f}",
-        f"Mean Squared Error: {mean_squared_error(y_test, predictions):.4f}",
-        f"R2 Score: {r2_score(y_test, predictions):.4f}",
-    ]
+    # 2. Linear Regression
+    lin_reg = LinearRegression()
+    lin_reg.fit(X_train, y_train)
+    y_pred_lin = lin_reg.predict(X_test)
 
-    evaluation_path = REPORTS_DIR / "regression_evaluation.txt"
-    evaluation_path.write_text("\n".join(evaluation), encoding="utf-8")
-    save_model(model, REGRESSION_MODEL_PATH)
-
-    print("Regression: RandomForestRegressor trained with Cluster as target.")
-    print(f"Regression evaluation saved to {evaluation_path}")
-
-    return model
+    # K-fold cross‑validation (misal cv=5) untuk kedua model
+    rf_cv_scores = cross_val_score(rf_reg, X, y, cv=5, scoring="r2")
+    lin_cv_scores = cross_val_score(lin_reg, X, y, cv=5, scoring="r2")
 
 
-if __name__ == "__main__":
-    run_regression()
+    # Evaluasi pada test set
+    def evaluate(y_true, y_pred):
+        mae = mean_absolute_error(y_true, y_pred)
+        rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+        r2 = r2_score(y_true, y_pred)
+        return mae, rmse, r2
+
+    rf_mae, rf_rmse, rf_r2 = evaluate(y_test, y_pred_rf) #RandomForestRegressor
+    lin_mae, lin_rmse, lin_r2 = evaluate(y_test, y_pred_lin) #LinearRegression
+    joblib.dump(rf_reg, REGRESSION_MODEL_PATH)
+
+    with open(REGRESSION_EVALUATION_PATH, "w") as file:
+        file.write("REGRESSION EVALUATION\n")
+        file.write("=====================\n\n")
+        file.write("Model 1: RandomForestRegressor\n")
+        file.write(f"MAE  : {rf_mae:.4f}\n")
+        file.write(f"RMSE : {rf_rmse:.4f}\n")
+        file.write(f"R2   : {rf_r2:.4f}\n")
+        file.write(f"Cross-Validation R2 (mean of 5 folds): {np.mean(rf_cv_scores):.4f}\n\n")
+
+        file.write("Model 2: LinearRegression\n")
+        file.write(f"MAE  : {lin_mae:.4f}\n")
+        file.write(f"RMSE : {lin_rmse:.4f}\n")
+        file.write(f"R2   : {lin_r2:.4f}\n")
+        file.write(f"Cross-Validation R2 (mean of 5 folds): {np.mean(lin_cv_scores):.4f}\n\n")
+
+        file.write(
+            "Catatan: Cross-validation membantu menilai kestabilan model dengan data subset "
+            "yang berbeda-beda, sehingga hasil evaluasi lebih andal."
+        )
+
+    print("Evaluasi regresi selesai, model disimpan.")

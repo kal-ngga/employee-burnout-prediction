@@ -1,6 +1,7 @@
 """Bagian persiapan data."""
 
 import pandas as pd
+from datetime import datetime
 
 from utils import (
     CLEANED_DATA_PATH,
@@ -68,8 +69,9 @@ def prepare_data():
     for column in numeric_columns:
         df[column] = pd.to_numeric(df[column], errors="coerce")
 
-    max_year = int(df["Date of Joining"].dt.year.max())
-    df["Years Working"] = max_year - df["Date of Joining"].dt.year
+    current_year = datetime.now().year
+    df["Years Working"] = current_year - df["Date of Joining"].dt.year
+    df["Years Working"] = df["Years Working"].fillna(0).astype(int)
 
     selected_columns = [
         "Employee ID",
