@@ -29,6 +29,7 @@ CLUSTER_RISK_MAPPING_PATH = REPORTS_DIR / "cluster_risk_mapping.csv"
 CLUSTER_SUMMARY_PATH = REPORTS_DIR / "cluster_summary.csv"
 KMEANS_METRICS_PATH = REPORTS_DIR / "kmeans_metrics.csv"
 SILHOUETTE_SCORES_PATH = REPORTS_DIR / "silhouette_scores.csv"
+PCA_RESULT_PATH = REPORTS_DIR / "pca_clustering_result.csv"
 REGRESSION_EVALUATION_PATH = REPORTS_DIR / "regression_evaluation.txt"
 CLASSIFICATION_EVALUATION_PATH = REPORTS_DIR / "classification_evaluation.txt"
 
@@ -45,6 +46,8 @@ PCA_CLUSTERING_PLOT_PATH = ASSETS_DIR / "pca_clustering.png"
 HEATMAP_PATH = ASSETS_DIR / "heatmap.png"
 CLUSTERING_PLOT_PATH = ASSETS_DIR / "clustering.png"
 DISTRIBUTION_PLOT_PATH = ASSETS_DIR / "distribution.png"
+NUMERIC_DISTRIBUTIONS_PATH = ASSETS_DIR / "numeric_distributions.png"
+NUMERIC_BOXPLOTS_PATH = ASSETS_DIR / "numeric_boxplots.png"
 
 # Numeric features untuk clustering, regression, classification, dan Streamlit
 NUMERIC_FEATURES = [
