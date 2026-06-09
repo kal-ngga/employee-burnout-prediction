@@ -114,10 +114,10 @@ def parse_regression_metrics(report_text):
     """Mengubah report evaluasi regresi menjadi dataframe."""
     pattern = re.compile(
         r"Model \d+: (?P<Model>[^\n]+)\n"
-        r"MAE\s*:\s*(?P<MAE>[\d.]+)\n"
-        r"RMSE\s*:\s*(?P<RMSE>[\d.]+)\n"
-        r"R2\s*:\s*(?P<R2>[\d.]+)\n"
-        r"Cross-Validation R2 \(mean of 5 folds\): (?P<Cross_Validation_R2>[\d.]+)"
+        r"MAE\s*:\s*(?P<MAE>[-\d.]+)\n"
+        r"RMSE\s*:\s*(?P<RMSE>[-\d.]+)\n"
+        r"R2\s*:\s*(?P<R2>[-\d.]+)\n"
+        r"Cross-Validation R2 \(mean of 5 folds\): (?P<Cross_Validation_R2>[-\d.]+)"
     )
     return pd.DataFrame(match.groupdict() for match in pattern.finditer(report_text))
 
@@ -246,7 +246,7 @@ def render_regression_findings():
     st.markdown("### Tujuan")
     st.write(
         "Membandingkan **Random Forest Regressor** dan **Linear Regression** untuk "
-        "melihat model yang paling mampu mengikuti hasil pengelompokan."
+        "memprediksi nilai **Burn Rate** sebagai target kontinu."
     )
 
     report_text = read_text_report(REGRESSION_EVALUATION_PATH)
@@ -271,7 +271,8 @@ def render_regression_findings():
         f"**{float(best_model['R2']):.4f}**."
     )
     st.caption(
-        "Nilai R² yang semakin mendekati 1 menunjukkan hasil prediksi yang semakin baik."
+        "Evaluasi ini tidak menggunakan Cluster sebagai target regresi, sehingga hasilnya "
+        "tidak lagi sempurna karena menyalin label hasil clustering."
     )
 
 
@@ -280,7 +281,7 @@ def render_classification_findings():
     st.markdown("### Tujuan")
     st.write(
         "Membandingkan **Random Forest Classifier** dan **Logistic Regression** untuk "
-        "memprediksi Low atau High Burnout Risk."
+        "memprediksi **Low** atau **High Burnout Risk** dari target turunan Burn Rate."
     )
 
     report_text = read_text_report(CLASSIFICATION_EVALUATION_PATH)
@@ -298,8 +299,9 @@ def render_classification_findings():
                 f"{float(model_2['Test_Accuracy']) * 100:.2f}%",
             )
             st.info(
-                "Kedua model memberikan hasil sangat baik. **Random Forest Classifier** "
-                "digunakan sebagai model utama pada fitur prediksi aplikasi."
+                "Model utama pada fitur prediksi aplikasi adalah **Random Forest "
+                "Classifier**. Label yang diprediksi adalah kelas risiko dari Burn Rate, "
+                "bukan Cluster hasil K-Means."
             )
 
     confusion_matrix_path = REPORTS_DIR / "classification_confusion_matrix.csv"
@@ -357,6 +359,7 @@ def render_prediction_tab(classifier, kmeans, scaler, risk_mapping):
           Lama karyawan bekerja di perusahaan dalam satuan tahun.
         """
     )
+    st.markdown("-" * 20)
 
     col1, col2 = st.columns(2)
 
@@ -407,29 +410,46 @@ def render_prediction_tab(classifier, kmeans, scaler, risk_mapping):
             columns=NUMERIC_FEATURES,
         )
 
-        predicted_cluster = int(classifier.predict(input_df)[0])
+        predicted_risk_class = int(classifier.predict(input_df)[0])
         kmeans_cluster = int(kmeans.predict(scaler.transform(input_df))[0])
 
-        risk_info = risk_mapping.get(
-            predicted_cluster,
+        risk_info_by_class = {
+            0: {
+                "risk": "Low Burnout Risk",
+                "recommendation": "Pertahankan beban kerja dan pantau kondisi karyawan secara berkala.",
+            },
+            1: {
+                "risk": "High Burnout Risk",
+                "recommendation": "Evaluasi beban kerja, alokasi resource, dan dukungan pemulihan karyawan.",
+            },
+        }
+        risk_info = risk_info_by_class.get(
+            predicted_risk_class,
             {
                 "risk": "Unknown Risk",
-                "recommendation": "Jalankan ulang pipeline training untuk memperbarui mapping risiko.",
+                "recommendation": "Jalankan ulang pipeline training untuk memperbarui model klasifikasi.",
             },
         )
+        cluster_info = risk_mapping.get(kmeans_cluster)
 
         st.markdown("### Hasil Prediksi")
 
         result_col1, result_col2 = st.columns(2)
 
         with result_col1:
-            st.metric("Predicted Cluster", f"Cluster {predicted_cluster}")
+            st.metric("Predicted Risk Class", "High" if predicted_risk_class == 1 else "Low")
 
         with result_col2:
             st.metric("Burnout Risk", risk_info["risk"])
 
         st.write(f"**Recommendation:** {risk_info['recommendation']}")
-        st.caption(f"K-Means reference cluster from the same input: Cluster {kmeans_cluster}")
+        if cluster_info is not None:
+            st.caption(
+                "K-Means reference from the same input: "
+                f"Cluster {kmeans_cluster} ({cluster_info['risk']})."
+            )
+        else:
+            st.caption(f"K-Means reference from the same input: Cluster {kmeans_cluster}.")
 
 
 # ============================================================

@@ -4,6 +4,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -11,7 +13,7 @@ from sklearn.metrics import (
 )
 
 from utils import (
-    CLUSTERING_RESULT_PATH,
+    CLEANED_DATA_PATH,
     CLASSIFICATION_MODEL_PATH,
     CLASSIFICATION_EVALUATION_PATH,
     REPORTS_DIR,
@@ -21,10 +23,11 @@ from utils import (
 
 def run_classification():
     create_directories()
-    df = pd.read_csv(CLUSTERING_RESULT_PATH)
+    df = pd.read_csv(CLEANED_DATA_PATH)
 
     X = df[NUMERIC_FEATURES]
-    y = df["Cluster"]
+    burn_rate_threshold = df["Burn Rate"].median()
+    y = (df["Burn Rate"] >= burn_rate_threshold).astype(int)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
@@ -39,13 +42,17 @@ def run_classification():
     y_pred_rf = rf_clf.predict(X_test)
 
     # 2. Logistic Regression
-    log_reg = LogisticRegression(max_iter=1000)
+    log_reg = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            ("model", LogisticRegression(max_iter=1000)),
+        ]
+    )
     log_reg.fit(X_train, y_train)
     y_pred_log = log_reg.predict(X_test)
 
-    # Cross‑validation (accuracy) cv=5
-    rf_cv_scores = cross_val_score(rf_clf, X, y, cv=5, scoring="accuracy")
-    log_cv_scores = cross_val_score(log_reg, X, y, cv=5, scoring="accuracy")
+    rf_cv_scores = cross_val_score(rf_clf, X_train, y_train, cv=5, scoring="accuracy")
+    log_cv_scores = cross_val_score(log_reg, X_train, y_train, cv=5, scoring="accuracy")
 
     # Evaluasi pada test set
     rf_accuracy = accuracy_score(y_test, y_pred_rf)
@@ -53,7 +60,8 @@ def run_classification():
 
     # Confusion matrix dan classification report untuk model Random Forest
     rf_cm = confusion_matrix(y_test, y_pred_rf)
-    rf_report = classification_report(y_test, y_pred_rf)
+    target_names = ["Low Burnout Risk", "High Burnout Risk"]
+    rf_report = classification_report(y_test, y_pred_rf, target_names=target_names)
 
     # Simpan model Random Forest sebagai model utama
     joblib.dump(rf_clf, CLASSIFICATION_MODEL_PATH)
@@ -61,6 +69,13 @@ def run_classification():
     with open(CLASSIFICATION_EVALUATION_PATH, "w") as file:
         file.write("CLASSIFICATION EVALUATION\n")
         file.write("=========================\n\n")
+        file.write("Target: Burnout Risk Class\n")
+        file.write(f"Rule: High Burnout Risk jika Burn Rate >= {burn_rate_threshold:.4f}\n")
+        file.write(f"Features: {', '.join(NUMERIC_FEATURES)}\n")
+        file.write(
+            "Leakage control: Burn Rate, Cluster, dan label turunan target tidak digunakan "
+            "sebagai fitur input.\n\n"
+        )
         file.write("Model 1: RandomForestClassifier\n")
         file.write(f"Test Accuracy           : {rf_accuracy:.4f}\n")
         file.write(f"Cross-Validation Accuracy (mean) : {np.mean(rf_cv_scores):.4f}\n\n")
@@ -74,16 +89,16 @@ def run_classification():
         file.write(f"Cross-Validation Accuracy (mean) : {np.mean(log_cv_scores):.4f}\n\n")
 
         file.write(
-            "Catatan: Random Forest biasanya memberikan performa lebih baik, "
-            "sedangkan Logistic Regression berfungsi sebagai baseline.\n"
-            "Cross-validation membantu menilai performa rata-rata model.\n"
+            "Catatan: Klasifikasi sekarang memprediksi kelas risiko dari Burn Rate, bukan "
+            "menyalin label Cluster hasil K-Means. Cross-validation dihitung pada data "
+            "train untuk mengurangi bias evaluasi.\n"
         )
 
     # Simpan confusion matrix ke CSV supaya bisa divisualisasikan
     cm_df = pd.DataFrame(
         rf_cm,
-        index=["Actual 0", "Actual 1"],
-        columns=["Predicted 0", "Predicted 1"]
+        index=["Actual Low Burnout Risk", "Actual High Burnout Risk"],
+        columns=["Predicted Low Burnout Risk", "Predicted High Burnout Risk"]
     )
     cm_df.to_csv(REPORTS_DIR / "classification_confusion_matrix.csv", index=True)
 
